@@ -1,29 +1,16 @@
 <?xml version="1.0" ?>
 <robot name="cart">
   <link name="world"/>
-  <link name="slideBar">
+
+  <!-- follower x-->
+  <link name="follower_x">
     <visual>
       <geometry>
-        <box size="30 0.05 0.05"/>
+        <box size="0.01 0.01 0.01"/>
       </geometry>
       <origin xyz="0 0 0"/>
-      <material name="green">
-        <color rgba="0 0.8 .8 1"/>
-      </material>
-    </visual>
-    <inertial>
-      <mass value="100"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
-  <link name="cart">
-    <visual>
-      <geometry>
-        <box size="0.5 0.5 0.2"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-      <material name="blue">
-        <color rgba="0 0 .8 1"/>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
       </material>
     </visual>
     <inertial>
@@ -31,27 +18,105 @@
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
-  <joint name="world_to_base" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 1"/>
-    <parent link="world"/>
-    <child link="slideBar"/>
-  </joint>
-  <joint name="slider_to_cart" type="prismatic">
+
+  <!-- follower y-->
+  <link name="follower_y">
+    <visual>
+      <geometry>
+        <box size="0.01 0.01 0.01"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="green">
+        <color rgba="0 1 0 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <!-- follower z-->
+  <link name="follower_z">
+    <visual>
+      <geometry>
+        <box size="0.01 0.01 0.01"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="blue">
+        <color rgba="0 0 1 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <!-- world-follower_x joint -->
+  <joint name="world_to_follower_x" type="prismatic">
     <axis xyz="1 0 0"/>
     <origin xyz="0.0 0.0 0.0"/>
-    <parent link="slideBar"/>
-    <child link="cart"/>
-    <limit effort="1000.0" lower="-15" upper="15" velocity="30"/>
-    <dynamics damping="0.0" friction="0.0"/>
+    <parent link="world"/>
+    <child link="follower_x"/>
+    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+    <dynamics damping="1.0" friction="1.0"/>
   </joint>
+
+  <!-- follower_x-follower_y joint -->
+  <joint name="follower_x_to_follower_y" type="prismatic">
+    <axis xyz="0 1 0"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="follower_x"/>
+    <child link="follower_y"/>
+    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
+
+  <!-- follower_y-follower_z joint -->
+  <joint name="follower_y_to_follower_z" type="prismatic">
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="follower_y"/>
+    <child link="follower_z"/>
+    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
+
+
   <ros2_control name="GazeboSystem" type="system">
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>
     </hardware>
-    <joint name="slider_to_cart">
+
+    <joint name="world_to_follower_x" type="prismatic">
       <command_interface name="position">
-        <param name="min">-15</param>
-        <param name="max">15</param>
+        <param name="min">-9999</param>
+        <param name="max">9999</param>
+      </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">1.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="follower_x_to_follower_y" type="prismatic">
+      <command_interface name="position">
+        <param name="min">-9999</param>
+        <param name="max">9999</param>
+      </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">1.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="follower_y_to_follower_z" type="prismatic">
+      <command_interface name="position">
+        <param name="min">-9999</param>
+        <param name="max">9999</param>
       </command_interface>
       <state_interface name="position">
         <param name="initial_value">1.0</param>

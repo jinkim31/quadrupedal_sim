@@ -53,7 +53,8 @@ def generate_launch_description():
     # gazebo
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']))
+            get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+            launch_arguments={'world': os.path.join(pkg_path, "world", "world.world")}.items())
 
     spawn_entity = Node(
         package="gazebo_ros",

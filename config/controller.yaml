@@ -11,7 +11,9 @@ controller_manager:
 joint_trajectory_controller:
   ros__parameters:
     joints:
-      - slider_to_cart
+      - world_to_follower_x
+      - follower_x_to_follower_y
+      - follower_y_to_follower_z
     command_interfaces:
       - position
     state_interfaces:

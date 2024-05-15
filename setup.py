@@ -10,7 +10,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name, ['launch/launch.py']),
         ('share/' + package_name + '/urdf', ['urdf/06-flexible.urdf']),
-        ('share/' + package_name + '/config', ['config/controller.yaml'])
+        ('share/' + package_name + '/config', ['config/controller.yaml']),
+        ('share/' + package_name + '/world', ['world/world.world']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
