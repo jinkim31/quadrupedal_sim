@@ -19,13 +19,15 @@ class SimController(Node):
         msg.joint_names.append('world_to_follower_x')
         msg.joint_names.append('follower_x_to_follower_y')
         msg.joint_names.append('follower_y_to_follower_z')
+        msg.joint_names.append('follower_z_to_follower_yaw')
+        msg.joint_names.append('follower_yaw_to_follower_pitch')
 
         for i in range(3000):
             t = i/1000.0
             msg.points.append(
                 JointTrajectoryPoint(
-                    positions=[np.sin(1*np.pi*t/3.0)]*3,
-                    velocities=[0]*3,
+                    positions=[np.sin(1*np.pi*t/3.0)]*5,
+                    velocities=[0]*5,
                     time_from_start=Duration(sec=int(t), nanosec=int((t - int(t)) * 1e9))))
 
         self.publisher_.publish(msg)

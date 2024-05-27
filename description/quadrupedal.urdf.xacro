@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<robot name="cart">
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="quadrupedal">
   <link name="world"/>
 
   <!-- follower x-->
@@ -53,6 +53,40 @@
     </inertial>
   </link>
 
+  <!-- follower yaw-->
+  <link name="follower_yaw">
+    <visual>
+      <geometry>
+        <box size="0.1 0.1 0.1"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="yellow">
+        <color rgba="1 1 0 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <!-- follower pitch-->
+  <link name="follower_pitch">
+    <visual>
+      <geometry>
+        <box size="0.5 0.2 0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="cyan">
+        <color rgba="0 1 1 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
   <!-- world-follower_x joint -->
   <joint name="world_to_follower_x" type="prismatic">
     <axis xyz="1 0 0"/>
@@ -83,6 +117,25 @@
     <dynamics damping="1.0" friction="1.0"/>
   </joint>
 
+  <!-- follower_z-follower_yaw joint -->
+  <joint name="follower_z_to_follower_yaw" type="revolute">
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="follower_z"/>
+    <child link="follower_yaw"/>
+    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
+
+  <!-- follower_yaw-follower_pitch joint -->
+  <joint name="follower_yaw_to_follower_pitch" type="revolute">
+    <axis xyz="0 1 0"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="follower_yaw"/>
+    <child link="follower_pitch"/>
+    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
 
   <ros2_control name="GazeboSystem" type="system">
     <hardware>
@@ -124,7 +177,44 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
+
+    <joint name="follower_z_to_follower_yaw" type="revolute">
+      <command_interface name="position">
+        <param name="min">-9999</param>
+        <param name="max">9999</param>
+      </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">1.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+
+    <joint name="follower_yaw_to_follower_pitch" type="revolute">
+      <command_interface name="position">
+        <param name="min">-9999</param>
+        <param name="max">9999</param>
+      </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">1.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
   </ros2_control>
+
+  <!-- arm -->
+  <xacro:include filename="$(find franka_description)/robots/panda_arm.ros2_control.xacro" />
+  <xacro:panda_arm_ros2_control ns="panda_ns" robot_ip="127.0.0.1" use_fake_hardware="false" fake_sensor_commands="false" gazebo="true"/>
+
+  <joint name="test_joint" type="prismatic">
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="world"/>
+    <child link="panda_link0"/>
+    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+    <dynamics damping="1.0" friction="1.0"/>
+  </joint>
 
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">

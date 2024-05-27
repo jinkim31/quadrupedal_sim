@@ -14,6 +14,8 @@ joint_trajectory_controller:
       - world_to_follower_x
       - follower_x_to_follower_y
       - follower_y_to_follower_z
+      - follower_z_to_follower_yaw
+      - follower_yaw_to_follower_pitch
     command_interfaces:
       - position
     state_interfaces:

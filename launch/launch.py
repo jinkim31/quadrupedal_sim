@@ -31,15 +31,10 @@ def generate_launch_description():
         os.environ['GAZEBO_MODEL_PATH'] = model_path
         print("GAZEBO_MODEL_PATH set to", os.environ['GAZEBO_MODEL_PATH'])
 
-    # launch args
-    launch_args = DeclareLaunchArgument(
-        "use_sim_time", default_value="false", description="use sim time"
-    )
+    pkg_path = os.path.join(get_package_share_directory("quadrupedal_sim"))
 
     # robot state publisher
-    pkg_path = os.path.join(get_package_share_directory("quadrupedal_sim"))
-    xacro_file = os.path.join(pkg_path, "urdf", "06-flexible.urdf")
-    robot_description = xacro.process_file(xacro_file)
+    robot_description = xacro.process_file(os.path.join(pkg_path, "description", "quadrupedal.urdf.xacro"))
     print(robot_description.toxml())
     state_publisher = Node(
         package="robot_state_publisher",
@@ -75,7 +70,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
 
         RegisterEventHandler(
@@ -91,7 +85,7 @@ def generate_launch_description():
             )
         ),
 
-        launch_args,
+        DeclareLaunchArgument("use_sim_time", default_value="false", description="use sim time"),
         state_publisher,
         gazebo,
         spawn_entity
