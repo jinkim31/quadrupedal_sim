@@ -34,7 +34,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'controller = quadrupedal_sim.controller:main'
+            'controller = quadrupedal_sim.controller:main',
+            'dataset_gatherer = quadrupedal_sim.dataset_gatherer:main',
         ],
     },
 )

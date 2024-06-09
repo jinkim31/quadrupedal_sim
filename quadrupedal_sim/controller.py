@@ -14,7 +14,6 @@ class SimController(Node):
         self.timer = self.create_timer(0.01, self.timer_callback)
         self.joint_positions = np.zeros(8) # elevation, joint1, ..., joint7
         self.arm_joint_names = ['panda_joint'+str(i+1) for i in range(7)]
-        print(self.arm_joint_names)
 
     def timer_callback(self):
         # publish elevation command
@@ -44,9 +43,9 @@ class SimController(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    minimal_publisher = SimController()
-    rclpy.spin(minimal_publisher)
-    minimal_publisher.destroy_node()
+    node = SimController()
+    rclpy.spin(node)
+    node.destroy_node()
     rclpy.shutdown()
 
 
