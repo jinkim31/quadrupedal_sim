@@ -2,79 +2,11 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="quadrupedal">
   <link name="world"/>
 
-  <!-- follower x-->
-  <link name="follower_x">
-    <visual>
-      <geometry>
-        <box size="0.01 0.01 0.01"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-      <material name="red">
-        <color rgba="1 0 0 1"/>
-      </material>
-    </visual>
-    <inertial>
-      <mass value="1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
-
-  <!-- follower y-->
-  <link name="follower_y">
-    <visual>
-      <geometry>
-        <box size="0.01 0.01 0.01"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-      <material name="green">
-        <color rgba="0 1 0 1"/>
-      </material>
-    </visual>
-    <inertial>
-      <mass value="1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
-
-  <!-- follower z-->
-  <link name="follower_z">
-    <visual>
-      <geometry>
-        <box size="0.01 0.01 0.01"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-      <material name="blue">
-        <color rgba="0 0 1 1"/>
-      </material>
-    </visual>
-    <inertial>
-      <mass value="1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
-
-  <!-- follower yaw-->
-  <link name="follower_yaw">
-    <visual>
-      <geometry>
-        <box size="0.1 0.1 0.1"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-      <material name="yellow">
-        <color rgba="1 1 0 1"/>
-      </material>
-    </visual>
-    <inertial>
-      <mass value="1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
-
   <!-- follower pitch-->
-  <link name="follower_pitch">
+  <link name="body">
     <visual>
       <geometry>
-        <box size="0.5 0.2 0.2"/>
+        <box size="0.8 0.2 0.2"/>
       </geometry>
       <origin xyz="0 0 0"/>
       <material name="cyan">
@@ -82,139 +14,79 @@
       </material>
     </visual>
     <inertial>
-      <mass value="1"/>
+      <mass value="0.1"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
 
-  <!-- world-follower_x joint -->
-  <joint name="world_to_follower_x" type="prismatic">
-    <axis xyz="1 0 0"/>
-    <origin xyz="0.0 0.0 0.0"/>
+  <joint name="joint_world_to_body" type="prismatic">
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.0 0.0 0.5"/>
     <parent link="world"/>
-    <child link="follower_x"/>
+    <child link="body"/>
     <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1.0" friction="1.0"/>
-  </joint>
-
-  <!-- follower_x-follower_y joint -->
-  <joint name="follower_x_to_follower_y" type="prismatic">
-    <axis xyz="0 1 0"/>
-    <origin xyz="0.0 0.0 0.0"/>
-    <parent link="follower_x"/>
-    <child link="follower_y"/>
-    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1.0" friction="1.0"/>
-  </joint>
-
-  <!-- follower_y-follower_z joint -->
-  <joint name="follower_y_to_follower_z" type="prismatic">
-    <axis xyz="0 0 1"/>
-    <origin xyz="0.0 0.0 0.0"/>
-    <parent link="follower_y"/>
-    <child link="follower_z"/>
-    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1.0" friction="1.0"/>
-  </joint>
-
-  <!-- follower_z-follower_yaw joint -->
-  <joint name="follower_z_to_follower_yaw" type="revolute">
-    <axis xyz="0 0 1"/>
-    <origin xyz="0.0 0.0 0.0"/>
-    <parent link="follower_z"/>
-    <child link="follower_yaw"/>
-    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1.0" friction="1.0"/>
-  </joint>
-
-  <!-- follower_yaw-follower_pitch joint -->
-  <joint name="follower_yaw_to_follower_pitch" type="revolute">
-    <axis xyz="0 1 0"/>
-    <origin xyz="0.0 0.0 0.0"/>
-    <parent link="follower_yaw"/>
-    <child link="follower_pitch"/>
-    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1.0" friction="1.0"/>
+    <dynamics damping="1000.0" friction="1000.0"/>
   </joint>
 
   <ros2_control name="GazeboSystem" type="system">
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>
     </hardware>
+    <joint name="joint_world_to_body" type="prismatic">
 
-    <joint name="world_to_follower_x" type="prismatic">
-      <command_interface name="position">
-        <param name="min">-9999</param>
-        <param name="max">9999</param>
-      </command_interface>
-      <state_interface name="position">
-        <param name="initial_value">1.0</param>
-      </state_interface>
+      <command_interface name="position"/>
+
+      <state_interface name="position"/>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
-    </joint>
 
-    <joint name="follower_x_to_follower_y" type="prismatic">
-      <command_interface name="position">
-        <param name="min">-9999</param>
-        <param name="max">9999</param>
-      </command_interface>
-      <state_interface name="position">
-        <param name="initial_value">1.0</param>
-      </state_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-    </joint>
-
-    <joint name="follower_y_to_follower_z" type="prismatic">
-      <command_interface name="position">
-        <param name="min">-9999</param>
-        <param name="max">9999</param>
-      </command_interface>
-      <state_interface name="position">
-        <param name="initial_value">1.0</param>
-      </state_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-    </joint>
-
-    <joint name="follower_z_to_follower_yaw" type="revolute">
-      <command_interface name="position">
-        <param name="min">-9999</param>
-        <param name="max">9999</param>
-      </command_interface>
-      <state_interface name="position">
-        <param name="initial_value">1.0</param>
-      </state_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-    </joint>
-
-    <joint name="follower_yaw_to_follower_pitch" type="revolute">
-      <command_interface name="position">
-        <param name="min">-9999</param>
-        <param name="max">9999</param>
-      </command_interface>
-      <state_interface name="position">
-        <param name="initial_value">1.0</param>
-      </state_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
     </joint>
   </ros2_control>
 
-  <!-- arm -->
-  <xacro:include filename="$(find franka_description)/robots/panda_arm.ros2_control.xacro" />
-  <xacro:panda_arm_ros2_control ns="panda_ns" robot_ip="127.0.0.1" use_fake_hardware="false" fake_sensor_commands="false" gazebo="true"/>
+  <!-- from minseok's code -->
+  <xacro:arg name="arm_id" default="panda"/> <!-- Name of this panda -->
+  <xacro:arg name="hand" default="true"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+  <xacro:arg name="robot_ip" default=""/> <!-- IP address or hostname of the robot" -->
+  <xacro:arg name="use_fake_hardware" default="true"/>
+  <xacro:arg name="fake_sensor_commands" default="false"/>
+  <xacro:arg name="gazebo" default="true" /> <!-- Is the robot being simulated in gazebo?" -->
 
-  <joint name="test_joint" type="prismatic">
-    <axis xyz="0 0 1"/>
-    <origin xyz="0.0 0.0 0.0"/>
-    <parent link="world"/>
-    <child link="panda_link0"/>
-    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1.0" friction="1.0"/>
+  <!-- Create a simulatable URDF -->
+  <xacro:include filename="$(find franka_description)/robots/utils.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
+
+  <xacro:panda_arm arm_id="$(arg arm_id)" />
+
+  <xacro:if value="$(arg hand)">
+    <xacro:hand ns="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" />
+    <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint1" transmission="hardware_interface/EffortJointInterface" />
+    <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint2" transmission="hardware_interface/EffortJointInterface" />
+  </xacro:if>
+
+  <!-- Gazebo requires a joint to a link called "world" for statically mounted robots -->
+  <!-- <link name="world" /> -->
+  <joint name="body_arm_joint" type="fixed">
+    <origin xyz="0.3 0 0.1" />
+    <parent link="body" />
+    <child  link="$(arg arm_id)_link0" />
   </joint>
+
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint1" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint2" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint3" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint4" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint5" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint6" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint7" transmission="hardware_interface/EffortJointInterface" />
+
+  <xacro:transmission-franka-state arm_id="$(arg arm_id)" />
+  <xacro:transmission-franka-model arm_id="$(arg arm_id)"
+     root="$(arg arm_id)_joint1"
+     tip="$(arg arm_id)_joint8"
+   />
+
+  <xacro:include filename="$(find quadrupedal_sim)/description/panda_arm.ros2_control.xacro"/>
+  <xacro:panda_arm_ros2_control ns="$(arg arm_id)" robot_ip="$(arg robot_ip)" use_fake_hardware="$(arg use_fake_hardware)" fake_sensor_commands="$(arg fake_sensor_commands)" gazebo="$(arg gazebo)"/>
 
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
@@ -223,4 +95,50 @@
       <parameters>$(find quadrupedal_sim)/config/controller.yaml</parameters>
     </plugin>
   </gazebo>
+
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="0.03 0.03 0.03"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+    </visual>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0.05 0 0" rpy="3.141592 -1.57079632679 0"/>
+    <parent link="panda_hand" />
+    <child  link="camera_link" />
+  </joint>
+
+  <gazebo reference="camera_link">
+        <material>Gazebo/Red</material>
+        <sensor name="camera" type="camera">
+            <pose>0 0 0 0 0 0</pose>
+            <visualize>true</visualize>
+            <update_rate>30</update_rate>
+            <camera>
+                <horizontal_fov>1.089</horizontal_fov>
+                <image>
+                    <format>B8G8R8</format>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+                <clip>
+                    <near>0.05</near>
+                    <far>8.0</far>
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <frame_name>camera_link_optical</frame_name>
+                <min_depth>0.1</min_depth>
+                <max_depth>100.0</max_depth>
+            </plugin>
+        </sensor>
+    </gazebo>
+
 </robot>

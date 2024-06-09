@@ -2,22 +2,52 @@ controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
 
-    joint_trajectory_controller:
+    # Gripper controller
+    gripper_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+      joints:
+        - panda_finger_joint1
+        - panda_finger_joint2
+
+    panda_joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    base_joint_position_controller:
+      type: position_controllers/JointGroupPositionController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-joint_trajectory_controller:
+base_joint_position_controller:
   ros__parameters:
     joints:
-      - world_to_follower_x
-      - follower_x_to_follower_y
-      - follower_y_to_follower_z
-      - follower_z_to_follower_yaw
-      - follower_yaw_to_follower_pitch
+      - joint_world_to_body
+
+panda_joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - panda_joint1
+      - panda_joint2
+      - panda_joint3
+      - panda_joint4
+      - panda_joint5
+      - panda_joint6
+      - panda_joint7
     command_interfaces:
       - position
     state_interfaces:
       - position
       - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.2
+      goal_time: 0.0
+      panda_joint1: { trajectory: 0.2, goal: 0.1 }
+      panda_joint2: { trajectory: 0.2, goal: 0.1 }
+      panda_joint3: { trajectory: 0.2, goal: 0.1 }
+      panda_joint4: { trajectory: 0.2, goal: 0.1 }
+      panda_joint5: { trajectory: 0.2, goal: 0.1 }
+      panda_joint6: { trajectory: 0.2, goal: 0.1 }
+      panda_joint7: { trajectory: 0.2, goal: 0.1 }

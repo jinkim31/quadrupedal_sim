@@ -64,9 +64,15 @@ def generate_launch_description():
         output='screen'
     )
 
-    load_joint_trajectory_controller = ExecuteProcess(
+    load_base_joint_trajectory_controller = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
-             'joint_trajectory_controller'],
+             'base_joint_position_controller'],
+        output='screen'
+    )
+
+    load_panda_joint_trajectory_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+             'panda_joint_trajectory_controller'],
         output='screen'
     )
 
@@ -81,12 +87,17 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=load_joint_state_broadcaster,
-                on_exit=[load_joint_trajectory_controller],
+                on_exit=[load_base_joint_trajectory_controller],
             )
         ),
-
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster,
+                on_exit=[load_panda_joint_trajectory_controller],
+            )
+        ),
         DeclareLaunchArgument("use_sim_time", default_value="false", description="use sim time"),
         state_publisher,
         gazebo,
-        spawn_entity
+        spawn_entity,
     ])
