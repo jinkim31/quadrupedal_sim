@@ -8,6 +8,16 @@ import numpy as np
 from cv_bridge import CvBridge
 import cv2
 
+JOINT_NAMES = [
+    'panda_joint1',
+    'panda_joint2',
+    'panda_joint3',
+    'panda_joint4',
+    'panda_joint5',
+    'panda_joint6',
+    'panda_joint7',
+    'joint_world_to_body']
+
 class DatasetGatherer(Node):
     def __init__(self):
         super().__init__('quadrupedal_sim_controller')
@@ -23,7 +33,7 @@ class DatasetGatherer(Node):
         self.image_body_subscriber = self.create_subscription(Image, 'camera_body/image_raw', self.image_body_callback, 1)
         self.image_body_subscriber = self.create_subscription(Image, 'camera_hand/image_raw', self.image_hand_callback, 1)
 
-        # buffered messages
+        # buffered data
         self.joint_state_msg_buffered = None
         self.image_body_buffered = None
         self.image_hand_buffered = None
@@ -42,19 +52,10 @@ class DatasetGatherer(Node):
 
     def timer_callback(self):
         # check all data buffered
-        if not self.joint_state_msg_buffered or self.image_hand_buffered is None or self.image_body_buffered is None:
+        if self.joint_state_msg_buffered is None or self.image_hand_buffered is None or self.image_body_buffered is None:
             return
 
         # extract joint angles of interest
-        JOINT_NAMES = [
-            'panda_joint1',
-            'panda_joint2',
-            'panda_joint3',
-            'panda_joint4',
-            'panda_joint5',
-            'panda_joint6',
-            'panda_joint7',
-            'joint_world_to_body']
         joint_angles = {}
         for i, name in enumerate(self.joint_state_msg_buffered.name):
             if name in JOINT_NAMES:
