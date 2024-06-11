@@ -25,7 +25,7 @@ CAMERA_NAMES = ['camera_body', 'camera_hand', 'camera_overview', 'camera_table']
 # configs
 DATASET_DIR = '/home/jin/Desktop'
 SAMPLING_FREQUENCY = 30.0   # Hz
-MAX_TIMESTEPS = 300         # number of timesteps to record
+MAX_TIMESTEPS = 30         # number of timesteps to record
 
 class DatasetGatherer(Node):
     def __init__(self):
@@ -46,8 +46,8 @@ class DatasetGatherer(Node):
         self.create_subscription(Float64MultiArray, 'base_joint_position_controller/commands', self.base_joint_command_callback, 10)
 
         # buffered data
-        self.joint_angles_buffered = None
-        self.joint_velocities_buffered = None
+        self.joint_angles_buffered = []
+        self.joint_velocities_buffered = []
         self.images_buffered = {}
         self.panda_joint_command_buffered = None
         self.base_joint_command_buffered = None
@@ -59,23 +59,18 @@ class DatasetGatherer(Node):
         self.data_dict = {
             '/observations/qpos': [],
             '/observations/qvel': [],
-            '/action': [],
-        }
+            '/action': []}
         for cam_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{cam_name}'] = []
 
     def joint_state_callback(self, msg):
-        angles = []
-        velocities = []
+        self.joint_angles_buffered.clear()
+        self.joint_velocities_buffered.clear()
 
-        self.joint_angles_buffered = []
         for i, name in enumerate(msg.name):
             if name in JOINT_NAMES:
-                angles.append(msg.position[i])
-                velocities.append(msg.velocity[i])
-
-        self.joint_angles_buffered = angles
-        self.joint_velocities_buffered = velocities
+                self.joint_angles_buffered.append(msg.position[i])
+                self.joint_velocities_buffered.append(msg.velocity[i])
 
     def panda_joint_command_callback(self, msg):
         self.panda_joint_command_buffered = [x for x in msg.points[-1].positions]
@@ -98,7 +93,7 @@ class DatasetGatherer(Node):
         for camera_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{camera_name}'].append(self.images_buffered[camera_name])
 
-        # check record complete
+        # check recording complete
         n_recorded = len(self.data_dict['/action'])
         self.get_logger().info(f'logging: {n_recorded}/{MAX_TIMESTEPS}')
         if n_recorded < MAX_TIMESTEPS:
@@ -111,10 +106,10 @@ class DatasetGatherer(Node):
             obs = root.create_group('observations')
             image = obs.create_group('images')
             for camera_name in CAMERA_NAMES:
-                _ = image.create_dataset(camera_name, (MAX_TIMESTEPS, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
-            qpos = obs.create_dataset('qpos', (MAX_TIMESTEPS, len(JOINT_NAMES)))
-            qvel = obs.create_dataset('qvel', (MAX_TIMESTEPS, len(JOINT_NAMES)))
-            action = root.create_dataset('action', (MAX_TIMESTEPS, len(JOINT_NAMES)))
+                image.create_dataset(camera_name, (MAX_TIMESTEPS, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
+            obs.create_dataset('qpos', (MAX_TIMESTEPS, len(JOINT_NAMES)))
+            obs.create_dataset('qvel', (MAX_TIMESTEPS, len(JOINT_NAMES)))
+            root.create_dataset('action', (MAX_TIMESTEPS, len(JOINT_NAMES)))
 
             for name, array in self.data_dict.items():
                 self.get_logger().info(f'saving: {name}')
