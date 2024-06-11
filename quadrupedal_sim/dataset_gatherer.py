@@ -43,7 +43,7 @@ class DatasetGatherer(Node):
         self.declare_parameter('dir', '.')
         self.declare_parameter('fs', 30.0)
         self.declare_parameter('ns', 300)
-        self.dataset_dir = self.get_parameter('dir').get_parameter_value().string_value
+        self.dataset_dir = os.path.expanduser(self.get_parameter('dir').get_parameter_value().string_value)
         self.sampling_frequency = self.get_parameter('fs').get_parameter_value().double_value
         self.max_timestep = self.get_parameter('ns').get_parameter_value().integer_value
 
@@ -78,18 +78,26 @@ class DatasetGatherer(Node):
             '/observations/qpos': [],
             '/observations/qvel': [],
             '/action': []}
-        for cam_name in CAMERA_NAMES:
-            self.data_dict[f'/observations/images/{cam_name}'] = []
+        for camera_name in CAMERA_NAMES:
+            self.data_dict[f'/observations/images/{camera_name}'] = []
 
     @staticmethod
     def make_save_file_name(dir):
         i = 0
         while True:
-            path = os.path.join(dir, f'episode_{i}' + '.hdf5')
-            path = os.path.expanduser(path)
-            if not os.path.isfile(path):
-                return path
+            episode_name = f'episode_{i}'
+            file_path = os.path.join(dir, episode_name + '.hdf5')
+            dump_dir = os.path.join(dir, episode_name + '_dump')
+            if not os.path.isfile(file_path):
+                return file_path, dump_dir
             i += 1
+
+    @staticmethod
+    def dump_list_of_lists(path, data):
+        with open(path, 'w') as f:
+            for list in data:
+                f.write(','.join([str(x) for x in list]))
+                f.write('\n')
 
     def joint_state_callback(self, msg):
         self.joint_angles_buffered.clear()
@@ -129,14 +137,18 @@ class DatasetGatherer(Node):
             return
 
         # generate .hdf5 dataset file
-        dataset_path = self.make_save_file_name(self.dataset_dir)
-        self.get_logger().info(f'saving as file: {dataset_path}')
-        with h5py.File(dataset_path, 'w', rdcc_nbytes=1024 ** 2 * 2) as root:
+        file_path, dump_dir = self.make_save_file_name(self.dataset_dir)
+        if not os.path.exists(dump_dir):
+            os.makedirs(dump_dir)
+        self.get_logger().info(f'saving as file: {file_path}')
+        with h5py.File(file_path, 'w', rdcc_nbytes=1024 ** 2 * 2) as root:
             root.attrs['sim'] = True
+            root.attrs['fs'] = self.sampling_frequency
             obs = root.create_group('observations')
             image = obs.create_group('images')
             for camera_name in CAMERA_NAMES:
-                image.create_dataset(camera_name, (self.max_timestep, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
+                image.create_dataset(camera_name, (self.max_timestep, 480, 640, 3), dtype='uint8',
+                                     chunks=(1, 480, 640, 3))
             obs.create_dataset('qpos', (self.max_timestep, len(JOINT_NAMES)))
             obs.create_dataset('qvel', (self.max_timestep, len(JOINT_NAMES)))
             root.create_dataset('action', (self.max_timestep, len(JOINT_NAMES)))
@@ -144,6 +156,15 @@ class DatasetGatherer(Node):
             for name, array in self.data_dict.items():
                 self.get_logger().info(f'saving: {name}')
                 root[name][...] = array
+
+        # dump
+        for camera_name in CAMERA_NAMES:
+            os.mkdir(os.path.join(dump_dir, camera_name))
+            for i, image in enumerate(self.data_dict[f'/observations/images/{camera_name}']):
+                cv2.imwrite(os.path.join(dump_dir, camera_name, f'{i:04d}.png'), image)
+        self.dump_list_of_lists(os.path.join(dump_dir, 'qpos.csv'), self.data_dict['/observations/qpos'])
+        self.dump_list_of_lists(os.path.join(dump_dir, 'qvel.csv'), self.data_dict['/observations/qvel'])
+        self.dump_list_of_lists(os.path.join(dump_dir, 'action.csv'), self.data_dict['/action'])
 
         # raise exception to quit spin
         raise SystemExit
