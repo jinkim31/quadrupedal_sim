@@ -12,6 +12,7 @@ ros2 run quadrupedal_sim controller
 - ns: number of samples
 - fs: sampling frequency
 - dir: directory to save dataset file
+
 ```shell
 ros2 run quadrupedal_sim dataset_gatherer --ros-args -p ns:=30 -p fs:=30.0 -p dir:=~/Desktop
 ```
