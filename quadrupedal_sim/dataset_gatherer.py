@@ -43,12 +43,12 @@ class DatasetGatherer(Node):
         self.declare_parameter('dir', '.')
         self.declare_parameter('fs', 30.0)
         self.declare_parameter('ns', 300)
-        self.DATASET_DIR = self.get_parameter('dir').get_parameter_value().string_value
-        self.SAMPLING_FREQUENCY = self.get_parameter('fs').get_parameter_value().double_value
-        self.MAX_TIMESTEPS = self.get_parameter('ns').get_parameter_value().integer_value
+        self.dataset_dir = self.get_parameter('dir').get_parameter_value().string_value
+        self.sampling_frequency = self.get_parameter('fs').get_parameter_value().double_value
+        self.max_timestep = self.get_parameter('ns').get_parameter_value().integer_value
 
         # timer
-        self.timer = self.create_timer(1.0 / self.SAMPLING_FREQUENCY, self.timer_callback)
+        self.timer = self.create_timer(1.0 / self.sampling_frequency, self.timer_callback)
 
         # joint state subscriber
         self.create_subscription(JointState, 'joint_states', self.joint_state_callback, 10)
@@ -124,22 +124,22 @@ class DatasetGatherer(Node):
 
         # check recording complete
         n_recorded = len(self.data_dict['/action'])
-        self.get_logger().info(f'logging: {n_recorded}/{self.MAX_TIMESTEPS}')
-        if n_recorded < self.MAX_TIMESTEPS:
+        self.get_logger().info(f'logging: {n_recorded}/{self.max_timestep}')
+        if n_recorded < self.max_timestep:
             return
 
         # generate .hdf5 dataset file
-        dataset_path = self.make_save_file_name(self.DATASET_DIR)
+        dataset_path = self.make_save_file_name(self.dataset_dir)
         self.get_logger().info(f'saving as file: {dataset_path}')
         with h5py.File(dataset_path, 'w', rdcc_nbytes=1024 ** 2 * 2) as root:
             root.attrs['sim'] = True
             obs = root.create_group('observations')
             image = obs.create_group('images')
             for camera_name in CAMERA_NAMES:
-                image.create_dataset(camera_name, (self.MAX_TIMESTEPS, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
-            obs.create_dataset('qpos', (self.MAX_TIMESTEPS, len(JOINT_NAMES)))
-            obs.create_dataset('qvel', (self.MAX_TIMESTEPS, len(JOINT_NAMES)))
-            root.create_dataset('action', (self.MAX_TIMESTEPS, len(JOINT_NAMES)))
+                image.create_dataset(camera_name, (self.max_timestep, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
+            obs.create_dataset('qpos', (self.max_timestep, len(JOINT_NAMES)))
+            obs.create_dataset('qvel', (self.max_timestep, len(JOINT_NAMES)))
+            root.create_dataset('action', (self.max_timestep, len(JOINT_NAMES)))
 
             for name, array in self.data_dict.items():
                 self.get_logger().info(f'saving: {name}')
