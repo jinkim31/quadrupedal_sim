@@ -96,16 +96,18 @@ class DatasetGatherer(Node):
     def dump_list_of_lists(path, data):
         with open(path, 'w') as f:
             for list in data:
-                f.write(','.join([str(x) for x in list]))
-                f.write('\n')
+                f.write(','.join([str(x) for x in list]) + '\n')
 
     def joint_state_callback(self, msg):
-        self.joint_angles_buffered.clear()
-        self.joint_velocities_buffered.clear()
+        joint_angles_buffered = []
+        joint_velocities_buffered = []
         for i, name in enumerate(msg.name):
             if name in JOINT_NAMES:
-                self.joint_angles_buffered.append(msg.position[i])
-                self.joint_velocities_buffered.append(msg.velocity[i])
+                joint_angles_buffered.append(msg.position[i])
+                joint_velocities_buffered.append(msg.velocity[i])
+
+        self.joint_angles_buffered = joint_angles_buffered
+        self.joint_velocities_buffered = joint_velocities_buffered
 
     def panda_joint_command_callback(self, msg):
         self.panda_joint_command_buffered = [x for x in msg.points[-1].positions]
@@ -125,8 +127,7 @@ class DatasetGatherer(Node):
         # record data
         self.data_dict['/observations/qpos'].append(self.joint_angles_buffered)
         self.data_dict['/observations/qvel'].append(self.joint_velocities_buffered)
-        self.data_dict['/action'].append(
-            np.array(self.panda_joint_command_buffered + [self.base_joint_command_buffered]))
+        self.data_dict['/action'].append(np.array(self.panda_joint_command_buffered + [self.base_joint_command_buffered]))
         for camera_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{camera_name}'].append(self.images_buffered[camera_name])
 
@@ -162,6 +163,7 @@ class DatasetGatherer(Node):
             os.mkdir(os.path.join(dump_dir, camera_name))
             for i, image in enumerate(self.data_dict[f'/observations/images/{camera_name}']):
                 cv2.imwrite(os.path.join(dump_dir, camera_name, f'{i:04d}.png'), image)
+
         self.dump_list_of_lists(os.path.join(dump_dir, 'qpos.csv'), self.data_dict['/observations/qpos'])
         self.dump_list_of_lists(os.path.join(dump_dir, 'qvel.csv'), self.data_dict['/observations/qvel'])
         self.dump_list_of_lists(os.path.join(dump_dir, 'action.csv'), self.data_dict['/action'])
