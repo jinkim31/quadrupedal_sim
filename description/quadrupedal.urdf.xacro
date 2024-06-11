@@ -1,126 +1,127 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="quadrupedal">
-  <link name="world"/>
+    <link name="world"/>
 
-  <!-- follower pitch-->
-  <link name="body">
-    <visual>
-      <geometry>
-        <box size="0.8 0.2 0.2"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-      <material name="cyan">
-        <color rgba="0 1 1 1"/>
-      </material>
-    </visual>
-    <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
+    <!-- follower pitch-->
+    <link name="body">
+        <visual>
+            <geometry>
+                <box size="0.8 0.2 0.2"/>
+            </geometry>
+            <origin xyz="0 0 0"/>
+            <material name="cyan">
+                <color rgba="0 1 1 1"/>
+            </material>
+        </visual>
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+        </inertial>
+    </link>
 
-  <joint name="joint_world_to_body" type="prismatic">
-    <axis xyz="0 0 1"/>
-    <origin xyz="0.0 0.0 0.5"/>
-    <parent link="world"/>
-    <child link="body"/>
-    <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
-    <dynamics damping="1000.0" friction="1000.0"/>
-  </joint>
-
-  <ros2_control name="GazeboSystem" type="system">
-    <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
-    </hardware>
     <joint name="joint_world_to_body" type="prismatic">
-
-      <command_interface name="position"/>
-
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-
+        <axis xyz="0 0 1"/>
+        <origin xyz="0.0 0.0 0.5"/>
+        <parent link="world"/>
+        <child link="body"/>
+        <limit effort="1000.0" lower="-9999" upper="9999" velocity="9999"/>
+        <dynamics damping="1000.0" friction="1000.0"/>
     </joint>
-  </ros2_control>
 
-  <!-- from minseok's code -->
-  <xacro:arg name="arm_id" default="panda"/> <!-- Name of this panda -->
-  <xacro:arg name="hand" default="true"/> <!-- Should a franka_gripper be mounted at the flange?" -->
-  <xacro:arg name="robot_ip" default=""/> <!-- IP address or hostname of the robot" -->
-  <xacro:arg name="use_fake_hardware" default="true"/>
-  <xacro:arg name="fake_sensor_commands" default="false"/>
-  <xacro:arg name="gazebo" default="true" /> <!-- Is the robot being simulated in gazebo?" -->
+    <ros2_control name="GazeboSystem" type="system">
+        <hardware>
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+        </hardware>
+        <joint name="joint_world_to_body" type="prismatic">
 
-  <!-- Create a simulatable URDF -->
-  <xacro:include filename="$(find franka_description)/robots/utils.xacro" />
-  <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
+            <command_interface name="position"/>
 
-  <xacro:panda_arm arm_id="$(arg arm_id)" />
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+            <state_interface name="effort"/>
 
-  <xacro:if value="$(arg hand)">
-    <xacro:hand ns="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" />
-    <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint1" transmission="hardware_interface/EffortJointInterface" />
-    <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint2" transmission="hardware_interface/EffortJointInterface" />
-  </xacro:if>
+        </joint>
+    </ros2_control>
 
-  <!-- Gazebo requires a joint to a link called "world" for statically mounted robots -->
-  <!-- <link name="world" /> -->
-  <joint name="body_arm_joint" type="fixed">
-    <origin xyz="0.3 0 0.1" />
-    <parent link="body" />
-    <child  link="$(arg arm_id)_link0" />
-  </joint>
+    <!-- from minseok's code -->
+    <xacro:arg name="arm_id" default="panda"/> <!-- Name of this panda -->
+    <xacro:arg name="hand" default="true"/> <!-- Should a franka_gripper be mounted at the flange?" -->
+    <xacro:arg name="robot_ip" default=""/> <!-- IP address or hostname of the robot" -->
+    <xacro:arg name="use_fake_hardware" default="true"/>
+    <xacro:arg name="fake_sensor_commands" default="false"/>
+    <xacro:arg name="gazebo" default="true"/> <!-- Is the robot being simulated in gazebo?" -->
 
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint1" transmission="hardware_interface/EffortJointInterface" />
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint2" transmission="hardware_interface/EffortJointInterface" />
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint3" transmission="hardware_interface/EffortJointInterface" />
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint4" transmission="hardware_interface/EffortJointInterface" />
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint5" transmission="hardware_interface/EffortJointInterface" />
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint6" transmission="hardware_interface/EffortJointInterface" />
-  <xacro:gazebo-joint joint="$(arg arm_id)_joint7" transmission="hardware_interface/EffortJointInterface" />
+    <!-- Create a simulatable URDF -->
+    <xacro:include filename="$(find franka_description)/robots/utils.xacro"/>
+    <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro"/>
 
-  <xacro:transmission-franka-state arm_id="$(arg arm_id)" />
-  <xacro:transmission-franka-model arm_id="$(arg arm_id)"
-     root="$(arg arm_id)_joint1"
-     tip="$(arg arm_id)_joint8"
-   />
+    <xacro:panda_arm arm_id="$(arg arm_id)"/>
 
-  <xacro:include filename="$(find quadrupedal_sim)/description/panda_arm.ros2_control.xacro"/>
-  <xacro:panda_arm_ros2_control ns="$(arg arm_id)" robot_ip="$(arg robot_ip)" use_fake_hardware="$(arg use_fake_hardware)" fake_sensor_commands="$(arg fake_sensor_commands)" gazebo="$(arg gazebo)"/>
+    <xacro:if value="$(arg hand)">
+        <xacro:hand ns="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8"/>
+        <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint1" transmission="hardware_interface/EffortJointInterface"/>
+        <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint2" transmission="hardware_interface/EffortJointInterface"/>
+    </xacro:if>
 
-  <gazebo>
-    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
-        <robot_param>robot_description</robot_param>
-      <robot_param_node>robot_state_publisher</robot_param_node>
-      <parameters>$(find quadrupedal_sim)/config/controller.yaml</parameters>
-    </plugin>
-  </gazebo>
+    <!-- Gazebo requires a joint to a link called "world" for statically mounted robots -->
+    <!-- <link name="world" /> -->
+    <joint name="body_arm_joint" type="fixed">
+        <origin xyz="0.3 0 0.1"/>
+        <parent link="body"/>
+        <child link="$(arg arm_id)_link0"/>
+    </joint>
 
-  <link name="camera_hand_link">
-    <visual>
-      <geometry>
-        <box size="0.03 0.03 0.03"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-    </visual>
-    <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint1" transmission="hardware_interface/EffortJointInterface"/>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint2" transmission="hardware_interface/EffortJointInterface"/>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint3" transmission="hardware_interface/EffortJointInterface"/>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint4" transmission="hardware_interface/EffortJointInterface"/>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint5" transmission="hardware_interface/EffortJointInterface"/>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint6" transmission="hardware_interface/EffortJointInterface"/>
+    <xacro:gazebo-joint joint="$(arg arm_id)_joint7" transmission="hardware_interface/EffortJointInterface"/>
 
-  <joint name="camera_hand_joint" type="fixed">
-    <origin xyz="0.05 0 0" rpy="3.141592 -1.57079632679 0"/>
-    <parent link="panda_hand" />
-    <child  link="camera_hand_link" />
-  </joint>
+    <xacro:transmission-franka-state arm_id="$(arg arm_id)"/>
+    <xacro:transmission-franka-model arm_id="$(arg arm_id)"
+                                     root="$(arg arm_id)_joint1"
+                                     tip="$(arg arm_id)_joint8"
+    />
 
-  <gazebo reference="camera_hand_link">
+    <xacro:include filename="$(find quadrupedal_sim)/description/panda_arm.ros2_control.xacro"/>
+    <xacro:panda_arm_ros2_control ns="$(arg arm_id)" robot_ip="$(arg robot_ip)"
+                                  use_fake_hardware="$(arg use_fake_hardware)"
+                                  fake_sensor_commands="$(arg fake_sensor_commands)" gazebo="$(arg gazebo)"/>
+
+    <gazebo>
+        <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+            <robot_param>robot_description</robot_param>
+            <robot_param_node>robot_state_publisher</robot_param_node>
+            <parameters>$(find quadrupedal_sim)/config/controller.yaml</parameters>
+        </plugin>
+    </gazebo>
+
+    <!-- hand cam -->
+    <link name="camera_hand_link">
+        <visual>
+            <geometry>
+                <box size="0.03 0.03 0.03"/>
+            </geometry>
+            <origin xyz="0 0 0"/>
+        </visual>
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+        </inertial>
+    </link>
+    <joint name="camera_hand_joint" type="fixed">
+        <origin xyz="0.05 0 0" rpy="3.141592 -1.57079632679 0"/>
+        <parent link="panda_hand"/>
+        <child link="camera_hand_link"/>
+    </joint>
+    <gazebo reference="camera_hand_link">
         <material>Gazebo/Red</material>
         <sensor name="camera_hand" type="camera">
             <pose>0 0 0 0 0 0</pose>
             <visualize>true</visualize>
-            <update_rate>30</update_rate>
+            <update_rate>0</update_rate>
             <camera>
                 <horizontal_fov>1.089</horizontal_fov>
                 <image>
@@ -134,38 +135,39 @@
                 </clip>
             </camera>
             <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-                <frame_name>camera_link_optical</frame_name>
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.0</updateRate>
+                <frame_name>camera_hand_link</frame_name>
                 <min_depth>0.1</min_depth>
                 <max_depth>100.0</max_depth>
             </plugin>
         </sensor>
     </gazebo>
 
+    <!-- body cam -->
     <link name="camera_body_link">
-    <visual>
-      <geometry>
-        <box size="0.03 0.03 0.03"/>
-      </geometry>
-      <origin xyz="0 0 0"/>
-    </visual>
-    <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-    </inertial>
-  </link>
-
-  <joint name="camera_body_joint" type="fixed">
-    <origin xyz="0.4 0 0" rpy="0 0 0"/>
-    <parent link="body" />
-    <child  link="camera_body_link" />
-  </joint>
-
+        <visual>
+            <geometry>
+                <box size="0.03 0.03 0.03"/>
+            </geometry>
+            <origin xyz="0 0 0"/>
+        </visual>
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+        </inertial>
+    </link>
+    <joint name="camera_body_joint" type="fixed">
+        <origin xyz="0.4 0 0" rpy="0 0 0"/>
+        <parent link="body"/>
+        <child link="camera_body_link"/>
+    </joint>
     <gazebo reference="camera_body_link">
         <material>Gazebo/Red</material>
         <sensor name="camera_body" type="camera">
             <pose>0 0 0 0 0 0</pose>
             <visualize>true</visualize>
-            <update_rate>30</update_rate>
+            <update_rate>0</update_rate>
             <camera>
                 <horizontal_fov>1.089</horizontal_fov>
                 <image>
@@ -179,7 +181,101 @@
                 </clip>
             </camera>
             <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-                <frame_name>camera_link_optical</frame_name>
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.0</updateRate>
+                <frame_name>camera_body_link</frame_name>
+                <min_depth>0.1</min_depth>
+                <max_depth>100.0</max_depth>
+            </plugin>
+        </sensor>
+    </gazebo>
+
+    <!-- overview cam -->
+    <link name="camera_overview_link">
+        <visual>
+            <geometry>
+                <box size="0.03 0.03 0.03"/>
+            </geometry>
+            <origin xyz="0 0 0"/>
+        </visual>
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+        </inertial>
+    </link>
+    <joint name="camera_overview_joint" type="fixed">
+        <origin xyz="0 0.3 1.0" rpy="0 0.349066 0"/>
+        <parent link="body"/>
+        <child link="camera_overview_link"/>
+    </joint>
+    <gazebo reference="camera_overview_link">
+        <material>Gazebo/Red</material>
+        <sensor name="camera_overview" type="camera">
+            <pose>0 0 0 0 0 0</pose>
+            <visualize>true</visualize>
+            <update_rate>0</update_rate>
+            <camera>
+                <horizontal_fov>2.0944</horizontal_fov>
+                <image>
+                    <format>B8G8R8</format>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+                <clip>
+                    <near>0.05</near>
+                    <far>8.0</far>
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.0</updateRate>
+                <frame_name>camera_overview_link</frame_name>
+                <min_depth>0.1</min_depth>
+                <max_depth>100.0</max_depth>
+            </plugin>
+        </sensor>
+    </gazebo>
+
+    <!-- table cam -->
+    <link name="camera_table_link">
+        <visual>
+            <geometry>
+                <box size="0.03 0.03 0.03"/>
+            </geometry>
+            <origin xyz="0 0 0"/>
+        </visual>
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+        </inertial>
+    </link>
+    <joint name="camera_table_joint" type="fixed">
+        <origin xyz="2 0 2" rpy="0 1.5708 0"/>
+        <parent link="world"/>
+        <child link="camera_table_link"/>
+    </joint>
+    <gazebo reference="camera_table_link">
+        <material>Gazebo/Red</material>
+        <sensor name="camera_table" type="camera">
+            <pose>0 0 0 0 0 0</pose>
+            <visualize>true</visualize>
+            <update_rate>0</update_rate>
+            <camera>
+                <horizontal_fov>1.089</horizontal_fov>
+                <image>
+                    <format>B8G8R8</format>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+                <clip>
+                    <near>0.05</near>
+                    <far>8.0</far>
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.0</updateRate>
+                <frame_name>camera_table_link</frame_name>
                 <min_depth>0.1</min_depth>
                 <max_depth>100.0</max_depth>
             </plugin>

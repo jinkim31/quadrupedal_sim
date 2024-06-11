@@ -23,7 +23,7 @@ setup(
     version='0.0.0',
     packages=[package_name],
     data_files=package_files(
-        [(os.path.join('share', package_name), ['package.xml', 'launch/launch.py', 'launch/launch.py'])],
+        [(os.path.join('share', package_name), ['package.xml', 'launch/launch.py', 'launch/dataset_gatherer.py'])],
         ['world', 'description', 'config']),
     install_requires=['setuptools'],
     zip_safe=True,
