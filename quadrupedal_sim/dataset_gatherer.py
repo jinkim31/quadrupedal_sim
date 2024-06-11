@@ -63,6 +63,15 @@ class DatasetGatherer(Node):
         for cam_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{cam_name}'] = []
 
+    def make_save_file_name(self, dir):
+        i = 0
+        while True:
+            path = os.path.join(DATASET_DIR, f'episode_{i}' + '.hdf5')
+            if not os.path.isfile(path):
+                return path
+            i+=1
+
+
     def joint_state_callback(self, msg):
         self.joint_angles_buffered.clear()
         self.joint_velocities_buffered.clear()
@@ -100,7 +109,8 @@ class DatasetGatherer(Node):
             return
 
         # generate .hdf5 dataset file
-        dataset_path = os.path.join(DATASET_DIR, f'episode_{0}' + '.hdf5')
+        dataset_path = self.make_save_file_name(DATASET_DIR)
+        self.get_logger().info(f'saving as file: {dataset_path}')
         with h5py.File(dataset_path, 'w', rdcc_nbytes=1024 ** 2 * 2) as root:
             root.attrs['sim'] = True
             obs = root.create_group('observations')
