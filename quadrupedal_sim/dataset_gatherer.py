@@ -11,6 +11,7 @@ from functools import partial
 import h5py
 import os
 
+# constants
 JOINT_NAMES = [
     'panda_joint1',
     'panda_joint2',
@@ -22,17 +23,32 @@ JOINT_NAMES = [
     'joint_world_to_body']
 CAMERA_NAMES = ['camera_body', 'camera_hand', 'camera_overview', 'camera_table']
 
-# configs
-DATASET_DIR = '/home/jin/Desktop'
-SAMPLING_FREQUENCY = 30.0   # Hz
-MAX_TIMESTEPS = 30         # number of timesteps to record
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = DatasetGatherer()
+    try:
+        rclpy.spin(node)
+    except SystemExit:
+        rclpy.logging.get_logger('quadrupedal_sim_dataset_gatherer').info('Done')
+    node.destroy_node()
+    rclpy.shutdown()
+
 
 class DatasetGatherer(Node):
     def __init__(self):
         super().__init__('quadrupedal_sim_dataset_gatherer')
 
+        # params
+        self.declare_parameter('dir', '.')
+        self.declare_parameter('fs', 30.0)
+        self.declare_parameter('ns', 300)
+        self.DATASET_DIR = self.get_parameter('dir').get_parameter_value().string_value
+        self.SAMPLING_FREQUENCY = self.get_parameter('fs').get_parameter_value().double_value
+        self.MAX_TIMESTEPS = self.get_parameter('ns').get_parameter_value().integer_value
+
         # timer
-        self.timer = self.create_timer(1.0/SAMPLING_FREQUENCY, self.timer_callback)
+        self.timer = self.create_timer(1.0 / self.SAMPLING_FREQUENCY, self.timer_callback)
 
         # joint state subscriber
         self.create_subscription(JointState, 'joint_states', self.joint_state_callback, 10)
@@ -42,8 +58,10 @@ class DatasetGatherer(Node):
             self.create_subscription(Image, camera_name + '/image_raw', partial(self.image_callback, camera_name), 10)
 
         # joint command subscribers
-        self.create_subscription(JointTrajectory, 'panda_joint_trajectory_controller/joint_trajectory', self.panda_joint_command_callback, 10)
-        self.create_subscription(Float64MultiArray, 'base_joint_position_controller/commands', self.base_joint_command_callback, 10)
+        self.create_subscription(JointTrajectory, 'panda_joint_trajectory_controller/joint_trajectory',
+                                 self.panda_joint_command_callback, 10)
+        self.create_subscription(Float64MultiArray, 'base_joint_position_controller/commands',
+                                 self.base_joint_command_callback, 10)
 
         # buffered data
         self.joint_angles_buffered = []
@@ -63,19 +81,19 @@ class DatasetGatherer(Node):
         for cam_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{cam_name}'] = []
 
-    def make_save_file_name(self, dir):
+    @staticmethod
+    def make_save_file_name(dir):
         i = 0
         while True:
-            path = os.path.join(DATASET_DIR, f'episode_{i}' + '.hdf5')
+            path = os.path.join(dir, f'episode_{i}' + '.hdf5')
+            path = os.path.expanduser(path)
             if not os.path.isfile(path):
                 return path
-            i+=1
-
+            i += 1
 
     def joint_state_callback(self, msg):
         self.joint_angles_buffered.clear()
         self.joint_velocities_buffered.clear()
-
         for i, name in enumerate(msg.name):
             if name in JOINT_NAMES:
                 self.joint_angles_buffered.append(msg.position[i])
@@ -92,34 +110,36 @@ class DatasetGatherer(Node):
 
     def timer_callback(self):
         # check all data buffered
-        if not np.all(self.joint_angles_buffered) or len(self.images_buffered) != len(CAMERA_NAMES) or not self.panda_joint_command_buffered or self.base_joint_command_buffered == None:
+        if not np.all(self.joint_angles_buffered) or len(self.images_buffered) != len(
+                CAMERA_NAMES) or not self.panda_joint_command_buffered or self.base_joint_command_buffered == None:
             return
 
         # record data
         self.data_dict['/observations/qpos'].append(self.joint_angles_buffered)
         self.data_dict['/observations/qvel'].append(self.joint_velocities_buffered)
-        self.data_dict['/action'].append(np.array(self.panda_joint_command_buffered + [self.base_joint_command_buffered]))
+        self.data_dict['/action'].append(
+            np.array(self.panda_joint_command_buffered + [self.base_joint_command_buffered]))
         for camera_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{camera_name}'].append(self.images_buffered[camera_name])
 
         # check recording complete
         n_recorded = len(self.data_dict['/action'])
-        self.get_logger().info(f'logging: {n_recorded}/{MAX_TIMESTEPS}')
-        if n_recorded < MAX_TIMESTEPS:
+        self.get_logger().info(f'logging: {n_recorded}/{self.MAX_TIMESTEPS}')
+        if n_recorded < self.MAX_TIMESTEPS:
             return
 
         # generate .hdf5 dataset file
-        dataset_path = self.make_save_file_name(DATASET_DIR)
+        dataset_path = self.make_save_file_name(self.DATASET_DIR)
         self.get_logger().info(f'saving as file: {dataset_path}')
         with h5py.File(dataset_path, 'w', rdcc_nbytes=1024 ** 2 * 2) as root:
             root.attrs['sim'] = True
             obs = root.create_group('observations')
             image = obs.create_group('images')
             for camera_name in CAMERA_NAMES:
-                image.create_dataset(camera_name, (MAX_TIMESTEPS, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
-            obs.create_dataset('qpos', (MAX_TIMESTEPS, len(JOINT_NAMES)))
-            obs.create_dataset('qvel', (MAX_TIMESTEPS, len(JOINT_NAMES)))
-            root.create_dataset('action', (MAX_TIMESTEPS, len(JOINT_NAMES)))
+                image.create_dataset(camera_name, (self.MAX_TIMESTEPS, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
+            obs.create_dataset('qpos', (self.MAX_TIMESTEPS, len(JOINT_NAMES)))
+            obs.create_dataset('qvel', (self.MAX_TIMESTEPS, len(JOINT_NAMES)))
+            root.create_dataset('action', (self.MAX_TIMESTEPS, len(JOINT_NAMES)))
 
             for name, array in self.data_dict.items():
                 self.get_logger().info(f'saving: {name}')
@@ -128,15 +148,6 @@ class DatasetGatherer(Node):
         # raise exception to quit spin
         raise SystemExit
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = DatasetGatherer()
-    try:
-        rclpy.spin(node)
-    except SystemExit:
-        rclpy.logging.get_logger('quadrupedal_sim_dataset_gatherer').info('Done')
-    node.destroy_node()
-    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
