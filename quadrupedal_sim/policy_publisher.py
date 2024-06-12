@@ -116,6 +116,11 @@ class DatasetGatherer(Node):
         if not np.all(self.joint_angles_buffered) or len(self.images_buffered) != len(CAMERA_NAMES):
             return
 
+
+        # observations :
+        self.joint_angles_buffered # current joint angles in order of 'panda_joint1','panda_joint2','panda_joint3','panda_joint4','panda_joint5','panda_joint6','panda_joint7','joint_world_to_body'
+        self.images_buffered # image dictionary with keys 'camera_body', 'camera_hand', 'camera_overview', 'camera_table'
+        # action :
         # ml inference
         # TODO: replace placeholder
         joint_angles = [0.0]*8  # in order of 'panda_joint1','panda_joint2','panda_joint3','panda_joint4','panda_joint5','panda_joint6','panda_joint7','joint_world_to_body'
