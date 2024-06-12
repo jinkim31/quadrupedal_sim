@@ -1,9 +1,20 @@
-from setuptools import setup
+#!/usr/bin/env python3
 import os
-
+from glob import glob
+from setuptools import setup
+from pathlib import Path
+    
 package_name = 'quadrupedal_sim'
 
+
+data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+    ]
+
 def package_files(data_files, directory_list):
+
     paths_dict = {}
     for directory in directory_list:
         for (path, directories, filenames) in os.walk(directory):
@@ -14,29 +25,30 @@ def package_files(data_files, directory_list):
                     paths_dict[install_path].append(file_path)
                 else:
                     paths_dict[install_path] = [file_path]
+
     for key in paths_dict.keys():
         data_files.append((key, paths_dict[key]))
+
     return data_files
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.0.1',
     packages=[package_name],
-    data_files=package_files(
-        [(os.path.join('share', package_name), ['package.xml', 'launch/launch.py', 'launch/dataset_gatherer.py'])],
-        ['world', 'description', 'config']),
+    data_files=package_files(data_files, ['data/models/', 'launch/', 'data/worlds/', 'config', 'description']),
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='minu',
-    maintainer_email='cmw9903@kaist.ac.kr',
-    description='Basic Tutorial of ROS2',
-    license='Apache License 2.0',
+    author='Daehyung Park',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'controller = quadrupedal_sim.controller:main',
+            'add_object = quadrupedal_sim.add_object:main',
+            'delete_object = quadrupedal_sim.delete_object:main',
+            'random_object = quadrupedal_sim.random_object:main',
             'dataset_gatherer = quadrupedal_sim.dataset_gatherer:main',
-            'policy_publisher = quadrupedal_sim.policy_publisher:main',
+            'action_reproduce = quadrupedal_sim.action_reproduce:main',
+            'move_ready = quadrupedal_sim.move_ready:main',
         ],
     },
 )

@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="pos_x" default="1.2"/>
+  <xacro:arg name="pos_y" default="0.0"/>
+  <xacro:arg name="pos_z" default="-0.2"/>
+
+  <sdf version="1.4">
+    <world name="default">
+      <include>
+        <uri>model://ground_plane</uri>
+      </include>
+
+      <include>
+        <uri>model://sun</uri>
+      </include>
+
+      <scene>
+        <shadows>0</shadows>
+      </scene>
+
+      <model name="cafe_table">
+        <static>true</static>
+        <include>
+          <uri>model://cafe_table</uri>
+        </include>
+        <pose>"${pos_x}" "${pos_y}" "${pos_z}"0 0 0</pose>
+      </model>
+
+      <!-- Uncomment and modify as needed
+      <model name="cafe_table_left">
+        <include>
+          <uri>model://ur5_base</uri>
+        </include>
+        <pose>0 0.55 0 0 0 0</pose>
+      </model>
+      
+      <model name="cafe_table_right">
+        <include>
+          <uri>model://ur5_base</uri>
+        </include>
+        <pose>0 -0.55 0 0 0 0</pose>
+      </model>
+      
+      <model name="storage_left">
+        <static>true</static>
+        <include>
+          <uri>model://storage</uri>
+        </include>
+        <pose>0 0.55 0.6 0 0 0</pose>
+      </model>
+
+      <model name="storage_right">
+        <static>true</static>
+        <include>
+          <uri>model://storage</uri>
+        </include>
+        <pose>0 -0.55 0.6 0 0 0</pose>
+      </model>
+      -->
+    </world>
+  </sdf>
+</robot>
