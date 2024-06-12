@@ -20,7 +20,8 @@ JOINT_NAMES = [
     'panda_joint5',
     'panda_joint6',
     'panda_joint7',
-    'joint_world_to_body']
+    'joint_world_to_body',
+    'panda_finger_joint1']
 CAMERA_NAMES = ['camera_body', 'camera_hand', 'camera_overview', 'camera_table']
 
 
@@ -60,6 +61,8 @@ class DatasetGatherer(Node):
         # joint command subscribers
         self.create_subscription(JointTrajectory, 'panda_joint_trajectory_controller/joint_trajectory',
                                  self.panda_joint_command_callback, 10)
+        self.create_subscription(JointTrajectory, 'gripper_controller/joint_trajectory',
+                                 self.gripper_joint_command_callback, 10)
         self.create_subscription(Float64MultiArray, 'base_joint_position_controller/commands',
                                  self.base_joint_command_callback, 10)
 
@@ -69,6 +72,7 @@ class DatasetGatherer(Node):
         self.images_buffered = {}
         self.panda_joint_command_buffered = None
         self.base_joint_command_buffered = None
+        self.gripper_joint_command_buffered = None
 
         # cv bridge
         self.cv_bridge = CvBridge()
@@ -115,19 +119,21 @@ class DatasetGatherer(Node):
     def base_joint_command_callback(self, msg):
         self.base_joint_command_buffered = msg.data[0]
 
+    def gripper_joint_command_callback(self, msg):
+        self.gripper_joint_command_buffered = [x for x in msg.points[-1].positions][:1]
+
     def image_callback(self, image_name, msg):
         self.images_buffered[image_name] = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
 
     def timer_callback(self):
         # check all data buffered
-        if not np.all(self.joint_angles_buffered) or len(self.images_buffered) != len(
-                CAMERA_NAMES) or not self.panda_joint_command_buffered or self.base_joint_command_buffered == None:
+        if not np.all(self.joint_angles_buffered) or len(self.images_buffered) != len(CAMERA_NAMES) or not self.panda_joint_command_buffered or self.base_joint_command_buffered == None or self.gripper_joint_command_buffered==None:
             return
 
         # record data
         self.data_dict['/observations/qpos'].append(self.joint_angles_buffered)
         self.data_dict['/observations/qvel'].append(self.joint_velocities_buffered)
-        self.data_dict['/action'].append(np.array(self.panda_joint_command_buffered + [self.base_joint_command_buffered]))
+        self.data_dict['/action'].append(np.array(self.panda_joint_command_buffered + [self.base_joint_command_buffered] + self.gripper_joint_command_buffered))
         for camera_name in CAMERA_NAMES:
             self.data_dict[f'/observations/images/{camera_name}'].append(self.images_buffered[camera_name])
 

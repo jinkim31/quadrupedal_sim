@@ -26,7 +26,8 @@ JOINT_NAMES = [
     'panda_joint5',
     'panda_joint6',
     'panda_joint7',
-    'joint_world_to_body']
+    'joint_world_to_body',
+    'panda_finger_joint1']
 CAMERA_NAMES = ['camera_body', 'camera_hand', 'camera_overview', 'camera_table']
 
 def make_policy(policy_class, policy_config):

@@ -76,6 +76,12 @@ def generate_launch_description():
         output='screen'
     )
 
+    load_gripper_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+             'gripper_controller'],
+        output='screen'
+    )
+
     return LaunchDescription([
 
         RegisterEventHandler(
@@ -94,6 +100,12 @@ def generate_launch_description():
             event_handler=OnProcessExit(
                 target_action=load_joint_state_broadcaster,
                 on_exit=[load_panda_joint_trajectory_controller],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster,
+                on_exit=[load_gripper_controller],
             )
         ),
         DeclareLaunchArgument("use_sim_time", default_value="false", description="use sim time"),
