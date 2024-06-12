@@ -36,6 +36,7 @@ setup(
         'console_scripts': [
             'controller = quadrupedal_sim.controller:main',
             'dataset_gatherer = quadrupedal_sim.dataset_gatherer:main',
+            'policy_publisher = quadrupedal_sim.policy_publisher:main',
         ],
     },
 )
