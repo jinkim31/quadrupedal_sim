@@ -16,3 +16,8 @@ ros2 run quadrupedal_sim controller
 ```shell
 ros2 run quadrupedal_sim dataset_gatherer --ros-args -p ns:=300 -p fs:=30.0 -p dir:=~/Desktop
 ```
+
+### Policy publisher
+```shell
+ ros2 run quadrupedal_sim policy_publisher 
+ ```
