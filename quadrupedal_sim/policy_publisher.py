@@ -170,6 +170,8 @@ class DatasetGatherer(Node):
         self.arm_joint_command_publisher = self.create_publisher(JointTrajectory,
                                                                  'panda_joint_trajectory_controller/joint_trajectory',
                                                                  10)
+        self.gripper_joint_command_publisher = self.create_publisher(JointTrajectory,
+                                                                     'gripper_controller/joint_trajectory', 10)
         self.base_joint_command_publisher = self.create_publisher(Float64MultiArray,
                                                                   'base_joint_position_controller/commands', 10)
 
@@ -303,13 +305,31 @@ class DatasetGatherer(Node):
         msg = JointTrajectory()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.joint_names = JOINT_NAMES[:7]
-        duration = 0.1
+        duration = 0.01
         msg.points.append(
             JointTrajectoryPoint(
                 positions=joint_angles[:7],
                 velocities=[0] * 7,
                 time_from_start=Duration(sec=int(duration), nanosec=int((duration - int(duration)) * 1e9))))
         self.arm_joint_command_publisher.publish(msg)
+
+        # publish gripper command
+        msg = JointTrajectory()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.joint_names = ['panda_finger_joint1', 'panda_finger_joint2']
+        t = 0.000
+        msg.points.append(
+            JointTrajectoryPoint(
+                positions=[self.joint_positions[8]] * 2,
+                velocities=[0] * 2,
+                time_from_start=Duration(sec=int(t), nanosec=int((t - int(t)) * 1e9))))
+        t = 0.01
+        msg.points.append(
+            JointTrajectoryPoint(
+                positions=[self.joint_positions[8]] * 2,
+                velocities=[0] * 2,
+                time_from_start=Duration(sec=int(t), nanosec=int((t - int(t)) * 1e9))))
+        self.gripper_joint_command_publisher.publish(msg)
 
         if self.steps >= self.max_timestep:
             self.get_logger().info("Reached max_timestep. Stop Policy Publisher.")
